@@ -97,23 +97,13 @@ class LSFBatch:
                 for n in xrange(num_items)]
 
     def submit(self):
-        wd = os.getcwd()
         for n, command in enumerate(self._commands):
             jobName = 'Lincer_%03d' % n
             queue = self._queue
-            stdout = 'stdout'
-            stderr = 'stderr'
-
-            job_wd = 'Job_%03d' % n
-            if os.path.exists(job_wd):
-                shutil.rmtree(job_wd)
-            os.mkdir(job_wd)
-            os.chdir(job_wd)
+            stdout = 'stdout.' + jobName
+            stderr = 'stderr.' + jobName
 
             jobId = PyLSF.submit(command, jobName, queue, stdout, stderr)
-
-            os.chdir(wd)
-
             self._jobIds.append(jobId)
 
     def status(self, text=False):
