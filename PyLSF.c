@@ -207,7 +207,7 @@ PyLSF_submit(self, args, kwargs)
 
     static char *kwlist[] = {"command", "jobName", "queue", "stdout", "stderr", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|ssss", kwlist, &command, &jobName, &queue, &stdout, &stderr))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zzzz", kwlist, &command, &jobName, &queue, &stdout, &stderr))
         return NULL;
 
     jobId = lsf_submit(command, jobName, queue, stdout, stderr);
