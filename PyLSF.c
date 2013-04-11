@@ -8,7 +8,7 @@
 
 #define POLLING_INTERVAL 5 /* seconds */
 
-int lsf_submit(const char *, const char *, const char *, const char *, const char *);
+int lsf_submit(const char *, const char *, const char *, const int, const char *, const char *);
 int lsf_status(int);
 int lsf_wait(int);
 int lsf_kill(int);
@@ -23,10 +23,11 @@ static PyObject *PyLSF_kill(PyObject *, PyObject *);
  */
 
 int
-lsf_submit(command, jobName, queue, stdout, stderr)
+lsf_submit(command, jobName, queue, memory, stdout, stderr)
 	const char *command;
 	const char *jobName;
 	const char *queue;
+	const int memory;
 	const char *stdout;
 	const char *stderr;
 {
@@ -52,6 +53,14 @@ lsf_submit(command, jobName, queue, stdout, stderr)
 	 */
 	memset(&req, 0, sizeof(struct submit));
 
+	for (i = 0; i < LSF_RLIM_NLIMITS; i++)
+	{
+		req.rLimits[i] = DEFAULT_RLIMIT;
+	}
+
+	req.numProcessors = 1;
+	req.maxNumProcessors = 1;
+
 	req.command = (char *)command;
 
 	if (jobName != NULL)
@@ -66,6 +75,12 @@ lsf_submit(command, jobName, queue, stdout, stderr)
 		req.options |= SUB_QUEUE;
 	}
 
+	if (memory != -1)
+	{
+		req.rLimits[LSF_RLIMIT_RSS] = (int)memory;
+		req.options |= SUB_RES_REQ;
+	}
+
 	if (stdout != NULL)
 	{
 		req.outFile = (char *)stdout;
@@ -76,14 +91,6 @@ lsf_submit(command, jobName, queue, stdout, stderr)
 	{
 		req.errFile = (char *)stderr;
 		req.options |= SUB_ERR_FILE;
-	}
-
-	req.numProcessors = 1;
-	req.maxNumProcessors = 1;
-
-	for (i = 0; i < LSF_RLIM_NLIMITS; i++)
-	{
-		req.rLimits[i] = DEFAULT_RLIMIT;
 	}
 
 	/*
@@ -202,15 +209,16 @@ PyLSF_submit(self, args, kwargs)
     const char *command;
 	const char *jobName = NULL;
     const char *queue = NULL;
+    const int memory = -1;
     const char *stdout = NULL;
     const char *stderr = NULL;
 
-    static char *kwlist[] = {"command", "jobName", "queue", "stdout", "stderr", NULL};
+    static char *kwlist[] = {"command", "jobName", "queue", "memory", "stdout", "stderr", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zzzz", kwlist, &command, &jobName, &queue, &stdout, &stderr))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zzizz", kwlist, &command, &jobName, &queue, &memory, &stdout, &stderr))
         return NULL;
 
-    jobId = lsf_submit(command, jobName, queue, stdout, stderr);
+    jobId = lsf_submit(command, jobName, queue, memory, stdout, stderr);
 
     return Py_BuildValue("i", jobId);
 }
@@ -270,7 +278,7 @@ PyLSF_kill(self, args)
  * Doc strings for Python wrapper.
  */
 PyDoc_STRVAR(submit__doc__,
-	"submit(command, jobName=None, queue=None, stdout=None, stderr=None) -> int\n"
+	"submit(command, jobName=None, queue=None, memory=-1, stdout=None, stderr=None) -> int\n"
 	"\n"
 	"Submit an LSF job.\n"
 	"\n"
