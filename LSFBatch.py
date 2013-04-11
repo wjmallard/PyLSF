@@ -19,7 +19,7 @@ class LSFBatch:
         (0x10000, 'UNKWN'),
     )
 
-    def __init__(self, cmd, args, queue):
+    def __init__(self, cmd, args, queue=None):
         """
         cmd   : a command string, with named template fields.
         args  : a dictionary mapping keys to lists of values.
