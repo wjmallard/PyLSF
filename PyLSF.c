@@ -303,7 +303,7 @@ PyDoc_STRVAR(kill__doc__,
 static PyMethodDef PyLSFMethods[] = {
 	{
 		"submit",
-		PyLSF_submit,
+		(PyCFunction) PyLSF_submit,
 		METH_VARARGS | METH_KEYWORDS,
 		submit__doc__
 	},
