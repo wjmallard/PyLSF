@@ -86,13 +86,13 @@ class LSFBatch:
                 for n in xrange(num_items)]
 
     def submit(self):
-        for command in self._commands:
+        for n, command in enumerate(self._commands):
             kwargs = {
                 'jobName' : self._jobName,
                 'queue'   : self._queue,
                 'memory'  : self._memory,
-                'stdout'  : 'stdout.' + self._jobName,
-                'stderr'  : 'stderr.' + self._jobName,
+                'stdout'  : 'stdout.job_%d' % n,
+                'stderr'  : 'stderr.job_%d' % n,
             }
 
             PyLSF.submit(command, **kwargs)
