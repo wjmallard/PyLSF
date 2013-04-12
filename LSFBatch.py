@@ -19,7 +19,7 @@ class LSFBatch:
         (0x10000, 'UNKWN'),
     )
 
-    def __init__(self, cmd, args, queue=None):
+    def __init__(self, cmd, args, queue=None, memory=-1):
         """
         cmd   : a command string, with named template fields.
         args  : a dictionary mapping keys to lists of values.
@@ -44,6 +44,7 @@ class LSFBatch:
         self._cmd = cmd
         self._args = args
         self._queue = queue
+        self._memory = memory
 
         self._jobIds = []
 
@@ -100,10 +101,11 @@ class LSFBatch:
         for n, command in enumerate(self._commands):
             jobName = 'Lincer_%03d' % n
             queue = self._queue
+            memory = self._memory
             stdout = 'stdout.' + jobName
             stderr = 'stderr.' + jobName
 
-            jobId = PyLSF.submit(command, jobName, queue, stdout, stderr)
+            jobId = PyLSF.submit(command, jobName, queue, memory, stdout, stderr)
             self._jobIds.append(jobId)
 
     def status(self, text=False):
