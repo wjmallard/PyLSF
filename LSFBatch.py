@@ -1,29 +1,15 @@
-import os
 import sys
-import shutil
+from time import strftime
 import PyLSF
 
 class LSFBatch:
-    Status = (
-        (0x00000, 'NULL'),
-        (0x00001, 'PEND'),
-        (0x00002, 'PSUSP'),
-        (0x00004, 'RUN'),
-        (0x00008, 'SSUSP'),
-        (0x00010, 'USUSP'),
-        (0x00020, 'EXIT'),
-        (0x00040, 'DONE'),
-        (0x00080, 'PDONE'),
-        (0x00100, 'PERR'),
-        (0x00200, 'WAIT'),
-        (0x10000, 'UNKWN'),
-    )
-
-    def __init__(self, cmd, args, queue=None, memory=-1):
+    def __init__(self, cmd, args, jobName=None, queue=None, memory=-1):
         """
-        cmd   : a command string, with named template fields.
-        args  : a dictionary mapping keys to lists of values.
-        queue : LSF queue to use.
+        cmd     : a command string, with named template fields.
+        args    : a dictionary mapping keys to lists of values.
+        jobName : a name for the job group.
+        queue   : LSF queue to use.
+        memory  : LSF memory to use.
         
         To run 'someProgram' like this:
         
@@ -43,10 +29,12 @@ class LSFBatch:
         """
         self._cmd = cmd
         self._args = args
+        self._jobName = jobName
         self._queue = queue
         self._memory = memory
 
-        self._jobIds = []
+        if jobName is None:
+            self._jobName = 'PyLSF_' + strftime('%H%m%S')
 
         self._validate_args_shape(args)
         self._validate_args_content(cmd, args)
@@ -98,34 +86,19 @@ class LSFBatch:
                 for n in xrange(num_items)]
 
     def submit(self):
-        for n, command in enumerate(self._commands):
-            jobName = 'Lincer_%03d' % n
-            queue = self._queue
-            memory = self._memory
-            stdout = 'stdout.' + jobName
-            stderr = 'stderr.' + jobName
+        for command in self._commands:
+            kwargs = {
+                'jobName' : self._jobName,
+                'queue'   : self._queue,
+                'memory'  : self._memory,
+                'stdout'  : 'stdout.' + self._jobName,
+                'stderr'  : 'stderr.' + self._jobName,
+            }
 
-            jobId = PyLSF.submit(command, jobName, queue, memory, stdout, stderr)
-            self._jobIds.append(jobId)
-
-    def status(self, text=False):
-        for jobId in self._jobIds:
-            status = PyLSF.status(jobId)
-
-            if text:
-                flags = [stat
-                         for flag, stat in self.Status
-                         if (status & flag) != 0]
-                flags = '|'.join(flags)
-            else:
-                flags = str(status)
-
-            print 'Job <%d> : %s' % (jobId, flags)
+            PyLSF.submit(command, **kwargs)
 
     def wait(self):
-        for jobId in self._jobIds:
-            PyLSF.wait(jobId)
+        PyLSF.batch_wait(self._jobName)
 
     def kill(self):
-        for jobId in self._jobIds:
-            PyLSF.kill(jobId)
+        PyLSF.batch_kill(self._jobName)
