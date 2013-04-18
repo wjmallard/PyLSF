@@ -22,14 +22,20 @@
  * JOB_STAT_WAIT   0x00200 (512)
  * JOB_STAT_UNKWN  0x10000 (65536)
  */
-#define IS_UNFINISHED(job) ((job->status & (JOB_STAT_DONE | JOB_STAT_EXIT)) == 0)
+#define IS_UNFINISHED(status) ((status & (JOB_STAT_DONE | JOB_STAT_EXIT)) == 0)
 
 int lsf_submit(const char *, const char *, const char *, const int, const char *, const char *);
+int lsf_status(int);
+void lsf_wait(int);
+int lsf_kill(int);
 int lsf_batch_status(char *);
-int lsf_batch_wait(char *);
+void lsf_batch_wait(char *);
 int lsf_batch_kill(char *);
 
 static PyObject *PyLSF_submit(PyObject *, PyObject *, PyObject *);
+static PyObject *PyLSF_status(PyObject *, PyObject *);
+static PyObject *PyLSF_wait(PyObject *, PyObject *);
+static PyObject *PyLSF_kill(PyObject *, PyObject *);
 static PyObject *PyLSF_batch_status(PyObject *, PyObject *);
 static PyObject *PyLSF_batch_wait(PyObject *, PyObject *);
 static PyObject *PyLSF_batch_kill(PyObject *, PyObject *);
@@ -129,6 +135,68 @@ lsf_submit(command, jobName, queue, memory, stdout, stderr)
 }
 
 int
+lsf_status(jobId)
+	int jobId;
+{
+	struct jobInfoEnt *job;
+
+	if (lsb_init("PyLSF") < 0)
+	{
+		lsb_perror("lsb_init");
+		return -1;
+	}
+
+	if (lsb_openjobinfo(jobId, NULL, NULL, NULL, NULL, ALL_JOB) < 0)
+	{
+		lsb_perror("lsb_openjobinfo");
+		return -1;
+	}
+
+	job = lsb_readjobinfo(NULL);
+	if (job == NULL)
+	{
+		lsb_perror("lsb_readjobinfo");
+		return -1;
+	}
+
+	lsb_closejobinfo();
+
+	return job->status;
+}
+
+void
+lsf_wait(jobId)
+	int jobId;
+{
+	int jobStatus;
+
+	jobStatus = lsf_status(jobId);
+	while (IS_UNFINISHED(jobStatus))
+	{
+		sleep(POLLING_INTERVAL);
+		jobStatus = lsf_status(jobId);
+	}
+}
+
+int lsf_kill(jobId)
+	int jobId;
+{
+	if (lsb_init("PyLSF") < 0)
+	{
+		lsb_perror("lsb_init");
+		return -1;
+	}
+
+	if (lsb_signaljob(jobId, SIGKILL) < 0)
+	{
+		lsb_perror("lsb_signaljob");
+		return -1;
+	}
+
+	return 0;
+}
+
+int
 lsf_batch_status(jobName)
 	char *jobName;
 {
@@ -161,7 +229,7 @@ lsf_batch_status(jobName)
 			return -1;
 		}
 
-		if (IS_UNFINISHED(job))
+		if (IS_UNFINISHED(job->status))
 		{
 			numJobsUnfinished++;
 		}
@@ -172,7 +240,7 @@ lsf_batch_status(jobName)
 	return numJobsUnfinished;
 }
 
-int
+void
 lsf_batch_wait(jobName)
 	char *jobName;
 {
@@ -184,8 +252,6 @@ lsf_batch_wait(jobName)
 		sleep(POLLING_INTERVAL);
 		numJobsRemaining = lsf_batch_status(jobName);
 	}
-
-	return 0;
 }
 
 int
@@ -219,7 +285,7 @@ lsf_batch_kill(jobName)
 			return -1;
 		}
 
-		if (IS_UNFINISHED(job))
+		if (IS_UNFINISHED(job->status))
 		{
 			if (lsb_signaljob(job->jobId, SIGKILL) < 0)
 			{
@@ -263,6 +329,53 @@ PyLSF_submit(self, args, kwargs)
 }
 
 static PyObject *
+PyLSF_status(self, args)
+	PyObject *self;
+	PyObject *args;
+{
+	int status;
+
+	const int jobId;
+
+    if (!PyArg_ParseTuple(args, "i", &jobId))
+        return NULL;
+
+    status = lsf_status((int)jobId);
+
+    return Py_BuildValue("i", status);
+}
+
+static PyObject *
+PyLSF_wait(self, args)
+	PyObject *self;
+	PyObject *args;
+{
+	const int jobId;
+
+    if (!PyArg_ParseTuple(args, "i", &jobId))
+        return NULL;
+
+    lsf_wait((int)jobId);
+
+    return Py_None;
+}
+
+static PyObject *
+PyLSF_kill(self, args)
+	PyObject *self;
+	PyObject *args;
+{
+	const int jobId;
+
+    if (!PyArg_ParseTuple(args, "i", &jobId))
+        return NULL;
+
+    lsf_kill((int)jobId);
+
+    return Py_None;
+}
+
+static PyObject *
 PyLSF_batch_status(self, args)
 	PyObject *self;
 	PyObject *args;
@@ -284,16 +397,14 @@ PyLSF_batch_wait(self, args)
 	PyObject *self;
 	PyObject *args;
 {
-	int status;
-
 	const char *jobName;
 
     if (!PyArg_ParseTuple(args, "s", &jobName))
         return NULL;
 
-    status = lsf_batch_wait((char *)jobName);
+    lsf_batch_wait((char *)jobName);
 
-    return Py_BuildValue("i", status);
+    return Py_None;
 }
 
 static PyObject *
@@ -301,16 +412,14 @@ PyLSF_batch_kill(self, args)
 	PyObject *self;
 	PyObject *args;
 {
-	int status;
-
 	const char *jobName;
 
     if (!PyArg_ParseTuple(args, "s", &jobName))
         return NULL;
 
-    status = lsf_batch_kill((char *)jobName);
+    lsf_batch_kill((char *)jobName);
 
-    return Py_BuildValue("i", status);
+    return Py_None;
 }
 
 /*
@@ -322,6 +431,24 @@ PyDoc_STRVAR(submit__doc__,
 	"Submit an LSF job.\n"
 	"\n"
 	"Returns a jobId.\n"
+);
+
+PyDoc_STRVAR(status__doc__,
+	"status(jobName)\n"
+	"\n"
+	"Return the status of an LSF job.\n"
+);
+
+PyDoc_STRVAR(wait__doc__,
+	"wait(jobId)\n"
+	"\n"
+	"Wait for an LSF job to complete.\n"
+);
+
+PyDoc_STRVAR(kill__doc__,
+	"kill(jobId)\n"
+	"\n"
+	"Kill an LSF job.\n"
 );
 
 PyDoc_STRVAR(batch_status__doc__,
@@ -353,6 +480,24 @@ static PyMethodDef PyLSFMethods[] = {
 		(PyCFunction) PyLSF_submit,
 		METH_VARARGS | METH_KEYWORDS,
 		submit__doc__
+	},
+	{
+		"status",
+		PyLSF_status,
+		METH_VARARGS,
+		status__doc__
+	},
+	{
+		"wait",
+		PyLSF_wait,
+		METH_VARARGS,
+		wait__doc__
+	},
+	{
+		"kill",
+		PyLSF_kill,
+		METH_VARARGS,
+		kill__doc__
 	},
 	{
 		"batch_status",
