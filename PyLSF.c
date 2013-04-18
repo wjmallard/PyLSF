@@ -6,6 +6,7 @@
 #include <lsf/lsbatch.h>
 #include <lsf/lsf.h>
 
+#define LSF_APP_NAME "PyLSF"
 #define POLLING_INTERVAL 5 /* seconds */
 
 /*
@@ -61,7 +62,7 @@ lsf_submit(command, jobName, queue, memory, stdout, stderr)
 	/*
 	 * Initialize LSF connection.
 	 */
-	if (lsb_init("PyLSF") < 0)
+	if (lsb_init(LSF_APP_NAME) < 0)
 	{
 		lsb_perror("lsb_init");
 		return -1;
@@ -140,7 +141,7 @@ lsf_status(jobId)
 {
 	struct jobInfoEnt *job;
 
-	if (lsb_init("PyLSF") < 0)
+	if (lsb_init(LSF_APP_NAME) < 0)
 	{
 		lsb_perror("lsb_init");
 		return -1;
@@ -181,7 +182,7 @@ lsf_wait(jobId)
 int lsf_kill(jobId)
 	int jobId;
 {
-	if (lsb_init("PyLSF") < 0)
+	if (lsb_init(LSF_APP_NAME) < 0)
 	{
 		lsb_perror("lsb_init");
 		return -1;
@@ -204,7 +205,7 @@ lsf_batch_status(jobName)
 	int more;
 	int numJobsUnfinished;
 
-	if (lsb_init("PyLSF") < 0)
+	if (lsb_init(LSF_APP_NAME) < 0)
 	{
 		lsb_perror("lsb_init");
 		return -1;
@@ -261,7 +262,7 @@ lsf_batch_kill(jobName)
 	struct jobInfoEnt *job;
 	int more;
 
-	if (lsb_init("PyLSF") < 0)
+	if (lsb_init(LSF_APP_NAME) < 0)
 	{
 		lsb_perror("lsb_init");
 		return -1;
