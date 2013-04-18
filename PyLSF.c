@@ -22,7 +22,7 @@
  * JOB_STAT_WAIT   0x00200 (512)
  * JOB_STAT_UNKWN  0x10000 (65536)
  */
-#define IS_DONE(job) ((job->status & (JOB_STAT_DONE | JOB_STAT_EXIT)) == 0)
+#define IS_UNFINISHED(job) ((job->status & (JOB_STAT_DONE | JOB_STAT_EXIT)) == 0)
 
 int lsf_submit(const char *, const char *, const char *, const int, const char *, const char *);
 int lsf_batch_status(char *);
@@ -161,7 +161,7 @@ lsf_batch_status(jobName)
 			return -1;
 		}
 
-		if (IS_DONE(job))
+		if (IS_UNFINISHED(job))
 		{
 			numJobsUnfinished++;
 		}
@@ -219,7 +219,7 @@ lsf_batch_kill(jobName)
 			return -1;
 		}
 
-		if (IS_DONE(job))
+		if (IS_UNFINISHED(job))
 		{
 			if (lsb_signaljob(job->jobId, SIGKILL) < 0)
 			{
