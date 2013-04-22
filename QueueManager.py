@@ -34,7 +34,7 @@ class QueueManager:
             if firstIteration:
                 firstIteration = False
                 numJobsQueued = 0
-                numOpenSlots = maxJobs
+                numOpenSlots = min(maxJobs - numJobsQueued, numJobsUnqueued)
                 numJobsFinished = 0
             else:
                 numJobsQueued = PyLSF.batch_status(jobName)
