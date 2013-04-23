@@ -41,8 +41,9 @@ class QueueManager:
                 numOpenSlots = min(maxJobs - numJobsQueued, numJobsUnqueued)
                 numJobsFinished += numOpenSlots
 
-            logging.info('Submitting %d jobs. Completed %d of %d.'
-                         % (numOpenSlots, numJobsFinished, numJobsTotal))
+            if numOpenSlots > 0:
+                logging.info('Submitting %d jobs. Completed %d of %d.'
+                             % (numOpenSlots, numJobsFinished, numJobsTotal))
 
             for _ in xrange(numOpenSlots):
                 cmd, stdout, stderr = self._cmdList.pop(0)
