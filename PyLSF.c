@@ -194,7 +194,6 @@ lsf_wait(jobId)
 
 		if (terminated)
 		{
-			lsf_kill(jobId);
 			terminated = 0;
 			break;
 		}
@@ -279,7 +278,6 @@ lsf_batch_wait(jobName)
 
 		if (terminated)
 		{
-			lsf_batch_kill(jobName);
 			terminated = 0;
 			break;
 		}
