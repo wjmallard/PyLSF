@@ -25,6 +25,8 @@
  */
 #define IS_UNFINISHED(status) ((status & (JOB_STAT_DONE | JOB_STAT_EXIT)) == 0)
 
+static void catch_sigint(int);
+
 int lsf_submit(const char *, const char *, const char *, const int, const char *, const char *);
 int lsf_status(int);
 void lsf_wait(int);
@@ -40,6 +42,17 @@ static PyObject *PyLSF_kill(PyObject *, PyObject *);
 static PyObject *PyLSF_batch_status(PyObject *, PyObject *);
 static PyObject *PyLSF_batch_wait(PyObject *, PyObject *);
 static PyObject *PyLSF_batch_kill(PyObject *, PyObject *);
+
+/*
+ * Signal handling functions.
+ */
+
+static int terminated = 0;
+static void
+catch_sigint(int signal)
+{
+	terminated = 1;
+}
 
 /*
  * LSF interface functions.
@@ -171,11 +184,20 @@ lsf_wait(jobId)
 {
 	int jobStatus;
 
+	signal(SIGINT, catch_sigint);
+
 	jobStatus = lsf_status(jobId);
 	while (IS_UNFINISHED(jobStatus))
 	{
 		sleep(POLLING_INTERVAL);
 		jobStatus = lsf_status(jobId);
+
+		if (terminated)
+		{
+			lsf_kill(jobId);
+			terminated = 0;
+			break;
+		}
 	}
 }
 
@@ -247,11 +269,20 @@ lsf_batch_wait(jobName)
 {
 	int numJobsRemaining;
 
+	signal(SIGINT, catch_sigint);
+
 	numJobsRemaining = lsf_batch_status(jobName);
 	while (numJobsRemaining > 0)
 	{
 		sleep(POLLING_INTERVAL);
 		numJobsRemaining = lsf_batch_status(jobName);
+
+		if (terminated)
+		{
+			lsf_batch_kill(jobName);
+			terminated = 0;
+			break;
+		}
 	}
 }
 
