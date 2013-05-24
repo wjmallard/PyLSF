@@ -96,6 +96,10 @@ lsf_submit(command, jobName, queue, memory, stdout, stderr)
 
 	req.command = (char *)command;
 
+	// Make re-runnable by default.
+	req.options |= SUB_RERUNNABLE;
+	// This should be an option ...
+
 	if (jobName != NULL)
 	{
 		req.jobName = (char *)jobName;
