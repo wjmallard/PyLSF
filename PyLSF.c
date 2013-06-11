@@ -204,7 +204,8 @@ lsf_wait(jobId)
 	}
 }
 
-int lsf_kill(jobId)
+int
+lsf_kill(jobId)
 	int jobId;
 {
 	if (lsb_init(LSF_APP_NAME) < 0)
