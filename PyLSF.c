@@ -27,7 +27,7 @@
 
 static void catch_sigint(int);
 
-int lsf_submit(const char *, const char *, const char *, const int, const char *, const char *);
+int lsf_submit(const char *, const char *, const char *, const char *, const char *, const char *);
 int lsf_status(int);
 void lsf_wait(int);
 int lsf_kill(int);
@@ -59,11 +59,11 @@ catch_sigint(int signal)
  */
 
 int
-lsf_submit(command, jobName, queue, memory, stdout, stderr)
+lsf_submit(command, jobName, queue, resReq, stdout, stderr)
 	const char *command;
 	const char *jobName;
 	const char *queue;
-	const int memory;
+	const char *resReq;
 	const char *stdout;
 	const char *stderr;
 {
@@ -112,9 +112,9 @@ lsf_submit(command, jobName, queue, memory, stdout, stderr)
 		req.options |= SUB_QUEUE;
 	}
 
-	if (memory != -1)
+	if (resReq != NULL)
 	{
-		req.rLimits[LSF_RLIMIT_RSS] = (int)memory;
+		req.resReq = (char *)resReq;
 		req.options |= SUB_RES_REQ;
 	}
 
@@ -348,16 +348,16 @@ PyLSF_submit(self, args, kwargs)
     const char *command;
 	const char *jobName = NULL;
     const char *queue = NULL;
-    const int memory = -1;
+    const char *resReq = NULL;
     const char *stdout = NULL;
     const char *stderr = NULL;
 
-    static char *kwlist[] = {"command", "jobName", "queue", "memory", "stdout", "stderr", NULL};
+    static char *kwlist[] = {"command", "jobName", "queue", "resReq", "stdout", "stderr", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zzizz", kwlist, &command, &jobName, &queue, &memory, &stdout, &stderr))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zzzzz", kwlist, &command, &jobName, &queue, &resReq, &stdout, &stderr))
         return NULL;
 
-    jobId = lsf_submit(command, jobName, queue, memory, stdout, stderr);
+    jobId = lsf_submit(command, jobName, queue, resReq, stdout, stderr);
 
     return Py_BuildValue("i", jobId);
 }
@@ -460,7 +460,7 @@ PyLSF_batch_kill(self, args)
  * Doc strings for Python wrapper.
  */
 PyDoc_STRVAR(submit__doc__,
-	"submit(command, jobName=None, queue=None, memory=-1, stdout=None, stderr=None) -> int\n"
+	"submit(command, jobName=None, queue=None, resReq=None, stdout=None, stderr=None) -> int\n"
 	"\n"
 	"Submit an LSF job.\n"
 	"\n"
