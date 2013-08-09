@@ -60,11 +60,11 @@ catch_sigint(int signal)
  */
 
 int
-lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr)
+lsf_submit(command, jobName, queue, processors, memory, resReq, stdout, stderr)
 	char *command;
 	char *jobName;
 	char *queue;
-	int numCores;
+	int processors;
 	int memory;
 	char *resReq;
 	char *stdout;
@@ -120,10 +120,10 @@ lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr)
 		req.options |= SUB_QUEUE;
 	}
 
-	if (numCores > 1)
+	if (processors > 1)
 	{
-		req.numProcessors = numCores;
-		req.maxNumProcessors = numCores;
+		req.numProcessors = processors;
+		req.maxNumProcessors = processors;
 
 		if (strlen(fullResReq) > 0)
 		{
@@ -393,18 +393,18 @@ PyLSF_submit(self, args, kwargs)
     char *command;
 	char *jobName = NULL;
     char *queue = NULL;
-    int numCores = 1;
+    int processors = 1;
     int memory = 0;
     char *resReq = NULL;
     char *stdout = NULL;
     char *stderr = NULL;
 
-    static char *kwlist[] = {"command", "jobName", "queue", "numCores", "memory", "resReq", "stdout", "stderr", NULL};
+    static char *kwlist[] = {"command", "jobName", "queue", "processors", "memory", "resReq", "stdout", "stderr", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zziizzz", kwlist, &command, &jobName, &queue, &numCores, &memory, &resReq, &stdout, &stderr))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zziizzz", kwlist, &command, &jobName, &queue, &processors, &memory, &resReq, &stdout, &stderr))
         return NULL;
 
-    jobId = lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr);
+    jobId = lsf_submit(command, jobName, queue, processors, memory, resReq, stdout, stderr);
 
     return Py_BuildValue("i", jobId);
 }
@@ -507,7 +507,7 @@ PyLSF_batch_kill(self, args)
  * Doc strings for Python wrapper.
  */
 PyDoc_STRVAR(submit__doc__,
-	"submit(command, jobName=None, queue=None, numCores=1, memory=0, resReq=None, stdout=None, stderr=None) -> int\n"
+	"submit(command, jobName=None, queue=None, processors=1, memory=0, resReq=None, stdout=None, stderr=None) -> int\n"
 	"\n"
 	"Submit an LSF job.\n"
 	"\n"
