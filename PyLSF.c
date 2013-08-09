@@ -28,7 +28,7 @@
 
 static void catch_sigint(int);
 
-int lsf_submit(const char *, const char *, const char *, const int, const int, const char *, const char *, const char *);
+int lsf_submit(char *, char *, char *, int, int, char *, char *, char *);
 int lsf_status(int);
 void lsf_wait(int);
 int lsf_kill(int);
@@ -61,14 +61,14 @@ catch_sigint(int signal)
 
 int
 lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr)
-	const char *command;
-	const char *jobName;
-	const char *queue;
-	const int numCores;
-	const int memory;
-	const char *resReq;
-	const char *stdout;
-	const char *stderr;
+	char *command;
+	char *jobName;
+	char *queue;
+	int numCores;
+	int memory;
+	char *resReq;
+	char *stdout;
+	char *stderr;
 {
 	struct submit req;
 	struct submitReply reply;
@@ -102,7 +102,7 @@ lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr)
 	req.numProcessors = 1;
 	req.maxNumProcessors = 1;
 
-	req.command = (char *)command;
+	req.command = command;
 
 	// Make re-runnable by default.
 	req.options |= SUB_RERUNNABLE;
@@ -110,13 +110,13 @@ lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr)
 
 	if (jobName != NULL)
 	{
-		req.jobName = (char *)jobName;
+		req.jobName = jobName;
 		req.options |= SUB_JOB_NAME;
 	}
 
 	if (queue != NULL)
 	{
-		req.queue = (char *)queue;
+		req.queue = queue;
 		req.options |= SUB_QUEUE;
 	}
 
@@ -155,13 +155,13 @@ lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr)
 
 	if (stdout != NULL)
 	{
-		req.outFile = (char *)stdout;
+		req.outFile = stdout;
 		req.options |= SUB_OUT_FILE;
 	}
 
 	if (stderr != NULL)
 	{
-		req.errFile = (char *)stderr;
+		req.errFile = stderr;
 		req.options |= SUB_ERR_FILE;
 	}
 
@@ -390,14 +390,14 @@ PyLSF_submit(self, args, kwargs)
 {
 	int jobId;
 
-    const char *command;
-	const char *jobName = NULL;
-    const char *queue = NULL;
+    char *command;
+	char *jobName = NULL;
+    char *queue = NULL;
     int numCores = 1;
     int memory = 0;
-    const char *resReq = NULL;
-    const char *stdout = NULL;
-    const char *stderr = NULL;
+    char *resReq = NULL;
+    char *stdout = NULL;
+    char *stderr = NULL;
 
     static char *kwlist[] = {"command", "jobName", "queue", "numCores", "memory", "resReq", "stdout", "stderr", NULL};
 
