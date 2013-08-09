@@ -125,10 +125,7 @@ lsf_submit(command, jobName, queue, processors, memory, resReq, stdout, stderr)
 		req.numProcessors = processors;
 		req.maxNumProcessors = processors;
 
-		if (strlen(fullResReq) > 0)
-		{
-			fullResReq = strcat(fullResReq, " ");
-		}
+		fullResReq = strcat(fullResReq, " ");
 		fullResReq = strcat(fullResReq, "span[hosts=1]");
 	}
 
@@ -137,19 +134,13 @@ lsf_submit(command, jobName, queue, processors, memory, resReq, stdout, stderr)
 		char *memResReq = calloc(MAX_RESREQ_LEN, sizeof(char));
 		sprintf(memResReq, "rusage[mem=%d]", memory);
 
-		if (strlen(fullResReq) > 0)
-		{
-			fullResReq = strcat(fullResReq, " ");
-		}
+		fullResReq = strcat(fullResReq, " ");
 		fullResReq = strcat(fullResReq, memResReq);
 	}
 
 	if (resReq != NULL)
 	{
-		if (strlen(fullResReq) > 0)
-		{
-			fullResReq = strcat(fullResReq, " ");
-		}
+		fullResReq = strcat(fullResReq, " ");
 		fullResReq = strcat(fullResReq, resReq);
 	}
 
