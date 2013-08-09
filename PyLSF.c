@@ -8,6 +8,7 @@
 
 #define LSF_APP_NAME "PyLSF"
 #define POLLING_INTERVAL 5 /* seconds */
+#define MAX_RESREQ_LEN 512
 
 /*
  * JOB_STAT_NULL   0x00000 (0)
@@ -74,6 +75,11 @@ lsf_submit(command, jobName, queue, numCores, resReq, stdout, stderr)
 	int i;
 
 	/*
+	 * Initialize an empty resReq.
+	 */
+	char *fullResReq = calloc(MAX_RESREQ_LEN, sizeof(char));
+
+	/*
 	 * Initialize LSF connection.
 	 */
 	if (lsb_init(LSF_APP_NAME) < 0)
@@ -117,12 +123,21 @@ lsf_submit(command, jobName, queue, numCores, resReq, stdout, stderr)
 	{
 		req.numProcessors = numCores;
 		req.maxNumProcessors = numCores;
+
+		if (strlen(fullResReq) > 0)
+		{
+			fullResReq = strcat(fullResReq, " ");
+		}
+		fullResReq = strcat(fullResReq, "span[hosts=1]");
 	}
 
 	if (resReq != NULL)
 	{
-		req.resReq = (char *)resReq;
-		req.options |= SUB_RES_REQ;
+		if (strlen(fullResReq) > 0)
+		{
+			fullResReq = strcat(fullResReq, " ");
+		}
+		fullResReq = strcat(fullResReq, resReq);
 	}
 
 	if (stdout != NULL)
@@ -135,6 +150,15 @@ lsf_submit(command, jobName, queue, numCores, resReq, stdout, stderr)
 	{
 		req.errFile = (char *)stderr;
 		req.options |= SUB_ERR_FILE;
+	}
+
+	/*
+	 * If resReq is not empty, apply it.
+	 */
+	if (strlen(fullResReq) > 0)
+	{
+		req.resReq = fullResReq;
+		req.options |= SUB_RES_REQ;
 	}
 
 	/*
