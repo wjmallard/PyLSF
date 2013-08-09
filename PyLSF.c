@@ -28,7 +28,7 @@
 
 static void catch_sigint(int);
 
-int lsf_submit(const char *, const char *, const char *, const int, const char *, const char *, const char *);
+int lsf_submit(const char *, const char *, const char *, const int, const int, const char *, const char *, const char *);
 int lsf_status(int);
 void lsf_wait(int);
 int lsf_kill(int);
@@ -60,11 +60,12 @@ catch_sigint(int signal)
  */
 
 int
-lsf_submit(command, jobName, queue, numCores, resReq, stdout, stderr)
+lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr)
 	const char *command;
 	const char *jobName;
 	const char *queue;
 	const int numCores;
+	const int memory;
 	const char *resReq;
 	const char *stdout;
 	const char *stderr;
@@ -129,6 +130,18 @@ lsf_submit(command, jobName, queue, numCores, resReq, stdout, stderr)
 			fullResReq = strcat(fullResReq, " ");
 		}
 		fullResReq = strcat(fullResReq, "span[hosts=1]");
+	}
+
+	if (memory > 0)
+	{
+		char *memResReq = calloc(MAX_RESREQ_LEN, sizeof(char));
+		sprintf(memResReq, "rusage[mem=%d]", memory);
+
+		if (strlen(fullResReq) > 0)
+		{
+			fullResReq = strcat(fullResReq, " ");
+		}
+		fullResReq = strcat(fullResReq, memResReq);
 	}
 
 	if (resReq != NULL)
@@ -381,16 +394,17 @@ PyLSF_submit(self, args, kwargs)
 	const char *jobName = NULL;
     const char *queue = NULL;
     int numCores = 1;
+    int memory = 0;
     const char *resReq = NULL;
     const char *stdout = NULL;
     const char *stderr = NULL;
 
-    static char *kwlist[] = {"command", "jobName", "queue", "numCores", "resReq", "stdout", "stderr", NULL};
+    static char *kwlist[] = {"command", "jobName", "queue", "numCores", "memory", "resReq", "stdout", "stderr", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zzizzz", kwlist, &command, &jobName, &queue, &numCores, &resReq, &stdout, &stderr))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|zziizzz", kwlist, &command, &jobName, &queue, &numCores, &memory, &resReq, &stdout, &stderr))
         return NULL;
 
-    jobId = lsf_submit(command, jobName, queue, numCores, resReq, stdout, stderr);
+    jobId = lsf_submit(command, jobName, queue, numCores, memory, resReq, stdout, stderr);
 
     return Py_BuildValue("i", jobId);
 }
@@ -493,7 +507,7 @@ PyLSF_batch_kill(self, args)
  * Doc strings for Python wrapper.
  */
 PyDoc_STRVAR(submit__doc__,
-	"submit(command, jobName=None, queue=None, numCores=1, resReq=None, stdout=None, stderr=None) -> int\n"
+	"submit(command, jobName=None, queue=None, numCores=1, memory=0, resReq=None, stdout=None, stderr=None) -> int\n"
 	"\n"
 	"Submit an LSF job.\n"
 	"\n"
