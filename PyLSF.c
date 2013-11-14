@@ -506,7 +506,7 @@ PyDoc_STRVAR(submit__doc__,
 );
 
 PyDoc_STRVAR(status__doc__,
-	"status(jobName)\n"
+	"status(jobId) -> int\n"
 	"\n"
 	"Return the status of an LSF job.\n"
 );
@@ -524,7 +524,7 @@ PyDoc_STRVAR(kill__doc__,
 );
 
 PyDoc_STRVAR(batch_status__doc__,
-	"batch_status(jobName)\n"
+	"batch_status(jobName) -> int\n"
 	"\n"
 	"Return the number of incomplete jobs in an LSF batch.\n"
 );
