@@ -9,7 +9,7 @@ submit, status, and kill.
 
 PyLSF is intended to serve as a reference for other scientists wishing to
 automate job submission and management from within computational pipelines.
-It is more robust than calling ```bsub``` from ```subprocess.call()```.
+It is more robust than, say, calling ```bsub``` with ```subprocess.call()```.
 
 Since PyLSF uses the native Python API,
 a full wrapper for the LSF API is infeasible.
