@@ -1,15 +1,5 @@
 from distutils.core import setup, Extension
 
-# To build the module:
-# $ python setup.py build
-# $ mv build/lib.XYZ/PyLSF.so .
-# $ rm -rf build
-#
-# To use the module:
-# >>> import PyLSF
-#
-# Make sure LD_LIBRARY_PATH includes the LSF lib dir.
-
 PyLSF = Extension(
     'PyLSF',
     sources = [
@@ -32,8 +22,9 @@ PyLSF = Extension(
 setup(
     name = 'PyLSF',
     version = '0.1',
-    description = 'An LSF wrapper for the Lincer pipeline.',
+    description = 'An LSF extension for Python.',
     author = 'William Mallard',
     author_email = 'wmallard@fas.harvard.edu',
     ext_modules = [PyLSF],
 )
+

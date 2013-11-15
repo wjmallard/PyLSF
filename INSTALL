@@ -1,0 +1,31 @@
+Installing PyLSF
+================
+
+To build the module,
+find out where your LSF libraries and headers are stored.
+For example:
+
+```bash
+$ which bsub
+/lsf/7.0/linux2.6-glibc2.3-x86_64/bin/bsub
+```
+
+The libraries should be in ```/lsf/7.0/linux2.6-glibc2.3-x86_64/lib```,
+and the headers should be in ```/lsf/7.0/include```.
+Once you have this information,
+use it to set ```library_dirs``` and ```include_dirs``` in ```setup.py```.
+Then run the installer:
+
+```bash
+$ python setup.py build
+$ mv build/lib.XYZ/PyLSF.so .
+$ rm -rf build
+```
+
+Replace the XYZ with whatever version string appears there.
+
+To use the module:
+- Add the LSF lib directory to ```LD_LIBRARY_PATH```.
+- Add the PyLSF directory to ```PYTHON_PATH```.
+- from Python: ```>>> import PyLSF```
+
